@@ -90,11 +90,11 @@ namespace Waterfall . DataVirtualization {
         /// <param name="token"></param>
         /// <param name="results"></param>
         /// <returns></returns>
-        public static async Task<RectangleItem [ ]> UpdateCacheResources ( ItemIndexRange batch , CancellationToken token , int results ) {
+        public static async Task<RectangleItem [ ]> UpdateCacheResources ( int FirstIndex , int LastIndex , CancellationToken token , int results ) {
             var listString = await CacheHelpers . ReadResetCacheValue ( CacheConstants . RectangleColorList );
             List<RecSolidBrush> colorList = string . IsNullOrEmpty ( listString ) ? null : JsonHelper . FromJson<List<RecSolidBrush>> ( listString );
             RecSolidBrush [ ] newList = new RecSolidBrush [ results ];
-            Array . Copy ( colorList . ToArray ( ) , batch . FirstIndex , newList , 0 , results );
+            Array . Copy ( colorList . ToArray ( ) , FirstIndex , newList , 0 , results );
             /// 应用读取到的数据
             List<RectangleItem> files = new List<RectangleItem> ( );
             if ( results != 0 ) {

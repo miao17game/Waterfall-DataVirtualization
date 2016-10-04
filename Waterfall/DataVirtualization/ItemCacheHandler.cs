@@ -45,7 +45,7 @@ namespace Waterfall . DataVirtualization {
         /// 计时器，它用于延迟读取数据，如果列表快速滚动，以便我们能赶上
         /// </summary>
         private DispatcherTimer timer;
-
+      
         #if DEBUG
         /// <summary>
         /// 名字用于跟踪消息和调试
@@ -77,7 +77,7 @@ namespace Waterfall . DataVirtualization {
             #endif
         }
 
-        public delegate Task<T [ ]> FetchDataCallbackHandler ( ItemIndexRange range , CancellationToken ct );
+        public delegate Task<T [ ]> FetchDataCallbackHandler ( ItemIndexRange range , CancellationToken token );
 
         public event TypedEventHandler<object, CacheChangedEventArgs<T>> CacheChanged;
 
@@ -157,11 +157,10 @@ namespace Waterfall . DataVirtualization {
 
             #if TRACE_DATASOURCE
             string s = "┌ " + debugName + ".UpdateRanges: ";
-            foreach (ItemIndexRange range in ranges)
-            {
-                s += range.FirstIndex + "->" + range.LastIndex + " ";
+            foreach ( ItemIndexRange range in RangesToCache ) {
+                s += range . FirstIndex + "->" + range . LastIndex + " ";
             }
-            Debug.WriteLine(s);
+            Debug . WriteLine ( s );
             #endif
 
             /// 从旧到新的缓存块数据副本哪里有重叠
@@ -219,12 +218,11 @@ namespace Waterfall . DataVirtualization {
 
             #if TRACE_DATASOURCE
             s = "└ Pending requests: ";
-            foreach (ItemIndexRange range in this.requests)
-            {
-                s += range.FirstIndex + "->" + range.LastIndex + " ";
+            foreach ( ItemIndexRange range in this . RequestsNotInSpeedCache ) {
+                s += range . FirstIndex + "->" + range . LastIndex + " ";
             }
-            Debug.WriteLine(s);
-            #endif 
+            Debug . WriteLine ( s );
+            #endif
         }
 
         /// <summary>
@@ -301,7 +299,7 @@ namespace Waterfall . DataVirtualization {
             ItemIndexRange nextRequest = GetFirstRequestBlock ( MaxBatchFetchSize );
             if ( nextRequest != null ) {
                 CancelTokenSource = new CancellationTokenSource ( );
-                CancellationToken ct = CancelTokenSource . Token;
+                CancellationToken token = CancelTokenSource . Token;
                 RequestInProgressing = nextRequest;
                 T [ ] data = null;
                 try {
@@ -311,9 +309,9 @@ namespace Waterfall . DataVirtualization {
                     #endif
 
                     /// 使用回调来获取数据，在取消标记传递
-                    data = await FetchCallback ( nextRequest , ct );
+                    data = await FetchCallback ( nextRequest , token );
 
-                    if ( !ct . IsCancellationRequested ) {
+                    if ( !token . IsCancellationRequested ) {
 
                         #if TRACE_DATASOURCE
                         Debug.WriteLine(">" + debugName + " Inserting items into cache at: " + nextRequest.FirstIndex + "->" + (nextRequest.FirstIndex + data.Length - 1));

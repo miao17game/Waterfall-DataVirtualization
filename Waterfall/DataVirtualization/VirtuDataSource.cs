@@ -58,7 +58,7 @@ namespace Waterfall . DataVirtualization {
         /// <summary>
         /// 虚拟化的视口最大单次范围
         /// </summary>
-        private int UP_MAX_NUMBER = 50;
+        private int UP_MAX_NUMBER = 30;
         #endregion
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -150,11 +150,6 @@ namespace Waterfall . DataVirtualization {
         public void RangesChanged ( ItemIndexRange visibleRange , IReadOnlyList<ItemIndexRange> trackedItems ) {
 
             #if TRACE_DATASOURCE
-            string s = string.Format("* RangesChanged fired: Visible {0}->{1}", visibleRange.FirstIndex, visibleRange.LastIndex);
-            foreach (ItemIndexRange r in trackedItems) { s += string.Format(" {0}->{1}", r.FirstIndex, r.LastIndex); }
-            Debug.WriteLine(s);
-            #endif
-
             /// 检测视口范围和缓存范围的变化
             int index = 0;
             string Imform = string . Format ( "-----------* RangesChanged fired: \nVisible {0}->{1} -----------\n" , visibleRange . FirstIndex , visibleRange . LastIndex );
@@ -165,6 +160,7 @@ namespace Waterfall . DataVirtualization {
                 }
             }
             Debug . WriteLine ( Imform );
+            #endif
 
             ItemIndexRange [ ] newRange = new ItemIndexRange [ 2 ];
             Array . Copy ( trackedItems . ToArray ( ) , 0 , newRange , 0 , 2 );
@@ -181,12 +177,8 @@ namespace Waterfall . DataVirtualization {
         /// <param name="token"></param>
         /// <returns></returns>
         private async Task<RectangleItem [ ]> FetchDataCallback ( ItemIndexRange batch , CancellationToken token ) {
-            /// 从文件系统读取文件对象
-            int results = ( int ) Math . Max ( batch . Length , UP_MAX_NUMBER );
-            if ( batch . FirstIndex + ( int ) Math . Max ( batch . Length , UP_MAX_NUMBER ) > CurrentList . Count - 1 )
-                results = ( int ) batch . Length;
-            /// 读取存储的数据并整理
-            return await RectangleItem . UpdateCacheResources ( batch , token , results );
+            /// 从文件系统读取文件对象 , 读取存储的数据并整理
+            return await RectangleItem . UpdateCacheResources ( batch .FirstIndex , batch.LastIndex , token , (int)batch.Length );
         }
 
         /// <summary>
